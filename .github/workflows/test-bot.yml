@@ -1,0 +1,54 @@
+
+name: Test Mastodon Bot
+
+# 수동으로 버튼을 눌렀을 때만 실행합니다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-bot:
+    runs-on: ubuntu-24.04
+
+    steps:
+      # GitHub에 올려둔 Python 코드 불러오기
+      - name: Load bot code
+        uses: actions/checkout@v5
+
+      # Python 3.12 설치
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # 필요한 라이브러리 설치
+      - name: Install libraries
+        run: pip install -r requirements.txt
+
+      # 새 인증키로 마스토돈 로그인 및 멘션 조회
+      # 답글을 보내거나 알림을 삭제하지 않습니다.
+      - name: Test Mastodon connection
+        env:
+          MASTODON_CLIENT_ID: ${{ secrets.MASTODON_CLIENT_ID }}
+          MASTODON_CLIENT_SECRET: ${{ secrets.MASTODON_CLIENT_SECRET }}
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          from mastodon import Mastodon
+
+          api = Mastodon(
+              client_id=os.environ['MASTODON_CLIENT_ID'],
+              client_secret=os.environ['MASTODON_CLIENT_SECRET'],
+              access_token=os.environ['MASTODON_ACCESS_TOKEN'],
+              api_base_url='https://planet.moe'
+          )
+
+          api.account_verify_credentials()
+          print('Mastodon login: OK')
+
+          api.notifications(limit=1, types=['mention'])
+          print('Mention lookup: OK')
+          PY
