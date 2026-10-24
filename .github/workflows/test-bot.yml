@@ -1,19 +1,26 @@
 
-name: Test Mastodon Bot
+name: Mastodon Dice Bot
 
-# 수동으로 버튼을 눌렀을 때만 실행합니다.
+# 5분마다 자동 실행하거나 수동으로 실행할 수 있습니다.
 on:
+  schedule:
+    - cron: '2-59/5 * * * *'
   workflow_dispatch:
+
+# 같은 봇이 동시에 여러 번 실행되는 것을 방지합니다.
+concurrency:
+  group: mastodon-dice-bot
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  test-bot:
+  run-bot:
     runs-on: ubuntu-24.04
 
     steps:
-      # GitHub에 올려둔 Python 코드 불러오기
+      # 저장소에 있는 Python 코드 불러오기
       - name: Load bot code
         uses: actions/checkout@v5
 
@@ -23,39 +30,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      # 필요한 라이브러리 설치
+      # 봇 실행에 필요한 라이브러리 설치
       - name: Install libraries
         run: pip install -r requirements.txt
 
-      # 새 인증키로 마스토돈 로그인 및 멘션 조회
-      # 답글을 보내거나 알림을 삭제하지 않습니다.
-      - name: Test Mastodon connection
-        env:
-          MASTODON_CLIENT_ID: ${{ secrets.MASTODON_CLIENT_ID }}
-          MASTODON_CLIENT_SECRET: ${{ secrets.MASTODON_CLIENT_SECRET }}
-          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
-        run: |
-          python - <<'PY'
-          import os
-          from mastodon import Mastodon
-
-          api = Mastodon(
-              client_id=os.environ['MASTODON_CLIENT_ID'],
-              client_secret=os.environ['MASTODON_CLIENT_SECRET'],
-              access_token=os.environ['MASTODON_ACCESS_TOKEN'],
-              api_base_url='https://planet.moe'
-          )
-
-          api.account_verify_credentials()
-          print('Mastodon login: OK')
-
-          api.notifications(limit=1, types=['mention'])
-          print('Mention lookup: OK')
-          PY
-
-
-      # 새 Python 봇으로 실제 답글 테스트
-      - name: Test bot reply
+      # 마스토돈 봇 실행
+      # 실제 답글 발송과 처리한 알림 삭제를 활성화합니다.
+      - name: Run Mastodon bot
         env:
           MASTODON_CLIENT_ID: ${{ secrets.MASTODON_CLIENT_ID }}
           MASTODON_CLIENT_SECRET: ${{ secrets.MASTODON_CLIENT_SECRET }}
