@@ -52,3 +52,13 @@ jobs:
           api.notifications(limit=1, types=['mention'])
           print('Mention lookup: OK')
           PY
+
+
+      # 새 Python 봇으로 실제 답글 테스트
+      - name: Test bot reply
+        env:
+          MASTODON_CLIENT_ID: ${{ secrets.MASTODON_CLIENT_ID }}
+          MASTODON_CLIENT_SECRET: ${{ secrets.MASTODON_CLIENT_SECRET }}
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          LIVE_MODE: 'true'
+        run: python main.py
