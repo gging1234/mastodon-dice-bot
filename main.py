@@ -12,9 +12,9 @@ from mastodon import Mastodon
 
 BASE = 'https://planet.moe'
 FORTUNE_FILE = Path(__file__).with_name('fortune_messages.txt')
-# 실행이 늦어졌을 때도 최근 멘션을 처리할 수 있도록 30분 범위를 봅니다.
-# 오래 멈췄다가 다시 시작하면 30분 이전의 멘션은 처리하지 않습니다.
-LOOKBACK_MINUTES = 30
+# 서버 문제로 실행이 지연되어도 최근 24시간 내 멘션을 처리합니다.
+# 24시간보다 오래된 멘션에는 답장하지 않습니다.
+LOOKBACK_MINUTES = 1440
 
 
 def make_reply(toot_html):
